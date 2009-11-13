@@ -23,10 +23,9 @@ def get_credentials(muttrc_path):
         f = open(muttrc_path, 'r')
         data = f.read()
         f.close()
-        credentials = credentials_re.findall(data)
-        assert(len(credentials) == 2)
-        return dict(credentials)
-    except AssertionError:
+        credentials = dict(credentials_re.findall(data))
+        return (credentials['user'], credentials['pass'])
+    except KeyError:
         sys.stderr.write("Unable to parse credentials from muttrc file.\n")
         sys.exit(1)
     except IOError:
@@ -60,9 +59,8 @@ if __name__ == '__main__':
         sys.stderr.write("Usage: %s <path to .muttrc>\n" % sys.argv[0])
         sys.exit(1)
 
-    credentials = get_credentials(' '.join(sys.argv[1:]))
+    (username, password) = get_credentials(' '.join(sys.argv[1:]))
     # Hardcoded to gmail as .. that is what I use and I do not keep the
     # host-part in my regular .muttrc.
-    count = get_unread_count(('imap.gmail.com', 993), credentials['user'],
-                             credentials['pass'])
+    count = get_unread_count(('imap.gmail.com', 993), username, password)
     print tmux_format(count)
