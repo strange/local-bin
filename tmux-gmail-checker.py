@@ -12,9 +12,7 @@ import sys
 # argument; I want to keep my "dotfiles" clear of sensitive information and
 # it's nice to keep the stuff centralized. Do fork if you find it useful.
 
-BASE_RE = r'set\s+imap_%s\s*=\s*"([^"]+)"'
-user_re = re.compile(BASE_RE % 'user')
-pass_re = re.compile(BASE_RE % 'pass')
+credentials_re = re.compile(r'set\s+imap_(user|pass)\s*=\s*"([^"]+)"')
 def get_credentials(muttrc_path):
     """Return user-and-password-tuple by parsing a valid (containing the
     necessary credentials for connecting to an imap account) mutt
@@ -25,8 +23,10 @@ def get_credentials(muttrc_path):
         f = open(muttrc_path, 'r')
         data = f.read()
         f.close()
-        return (user_re.search(data).group(1), pass_re.search(data).group(1))
-    except AttributeError:
+        credentials = credentials_re.findall(data)
+        assert(len(credentials) == 2)
+        return dict(credentials)
+    except AssertionError:
         sys.stderr.write("Unable to parse credentials from muttrc file.\n")
         sys.exit(1)
     except IOError:
@@ -60,8 +60,9 @@ if __name__ == '__main__':
         sys.stderr.write("Usage: %s <path to .muttrc>\n" % sys.argv[0])
         sys.exit(1)
 
-    (username, password) = get_credentials(' '.join(sys.argv[1:]))
+    credentials = get_credentials(' '.join(sys.argv[1:]))
     # Hardcoded to gmail as .. that is what I use and I do not keep the
     # host-part in my regular .muttrc.
-    count = get_unread_count(('imap.gmail.com', 993), username, password)
+    count = get_unread_count(('imap.gmail.com', 993), credentials['user'],
+                             credentials['pass'])
     print tmux_format(count)
