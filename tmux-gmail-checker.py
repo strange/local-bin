@@ -64,3 +64,4 @@ if __name__ == '__main__':
     # host-part in my regular .muttrc.
     count = get_unread_count(('imap.gmail.com', 993), username, password)
     print tmux_format(count)
+    sys.exit(0)
